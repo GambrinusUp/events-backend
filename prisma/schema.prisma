@@ -19,22 +19,19 @@ model User {
   name      String
   password  String
   role      Role
+  isConfirmed Boolean  @default(false)
   company   Company? @relation(fields: [companyId], references: [id])
   companyId String?
 
   events        Event[]  @relation("StudentEvent")
   createdEvents Event[]  @relation("ManagerEvent")
-
-  Company Company[] @relation("ManagerCompany")
 }
 
 model Company {
   id       String     @id @default(uuid())
   name     String
-  managers User[]  @relation("ManagerCompany") 
+  managers User[]
   events   Event[]
-
-  User User[]
 }
 
 model Event {

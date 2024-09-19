@@ -28,7 +28,9 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  async findAllStudents(): Promise<Omit<User, 'password' | 'companyId'>[]> {
+  async findAllStudents(): Promise<
+    Omit<User, 'password' | 'companyId' | 'isConfirmed'>[]
+  > {
     const students = await this.prisma.user.findMany({
       where: { role: Role.STUDENT },
       select: {

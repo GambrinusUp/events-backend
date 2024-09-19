@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
 
   // Use DocumentBuilder to create a new Swagger document configuration
   const config = new DocumentBuilder()
