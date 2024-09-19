@@ -8,6 +8,7 @@ export class CreateUserDto {
   name: string;
 
   @ApiProperty({ example: 'john.doe@example.com' })
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 
@@ -20,4 +21,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsEnum(Role)
   role: Role;
+
+  @ApiProperty({ example: 'fd2565ab-e10e-4d35-80d8-488e3b1db654' })
+  companyId: string;
 }

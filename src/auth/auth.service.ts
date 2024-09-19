@@ -28,30 +28,57 @@ export class AuthService {
       throw new UnauthorizedException('Invalid password');
     }
     return {
-      accessToken: this.jwtService.sign({ userId: user.id }),
+      accessToken: this.jwtService.sign({ userId: user.id, role: user.role }),
     };
   }
 
   async register(createUserDto: CreateUserDto) {
-    const { email, name, password, role } = createUserDto;
+    const { email, name, password, role, companyId } = createUserDto;
+
+    if (role === 'MANAGER') {
+      if (!companyId) {
+        throw new BadRequestException(
+          'Company ID is required for manager registration',
+        );
+      }
+
+      const existingCompany = await this.prisma.company.findUnique({
+        where: { id: companyId },
+      });
+
+      if (!existingCompany) {
+        throw new BadRequestException('Company with this ID does not exist');
+      }
+    }
+
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
+
     if (existingUser) {
       throw new BadRequestException('User with this email already exists');
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await this.prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
         role, // Роль (STUDENT, MANAGER, DEAN)
+        companyId: role === 'MANAGER' ? companyId : null,
       },
     });
-    const accessToken = this.jwtService.sign({ userId: user.id });
+
+    const accessToken = this.jwtService.sign({
+      userId: user.id,
+      role: user.role,
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
+
     return {
       ...result,
       accessToken,

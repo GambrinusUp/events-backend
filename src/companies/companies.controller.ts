@@ -31,9 +31,6 @@ export class CompaniesController {
   }
 
   @Get()
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.DEAN)
   getAllCompanies() {
     return this.companiesService.getAllCompanies();
   }
