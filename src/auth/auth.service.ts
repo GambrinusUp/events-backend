@@ -21,11 +21,11 @@ export class AuthService {
   async login(email: string, password: string): Promise<AuthEntity> {
     const user = await this.prisma.user.findUnique({ where: { email: email } });
     if (!user) {
-      throw new NotFoundException(`No user found for email: ${email}`);
+      throw new NotFoundException(`Нет пользователя с таким email: ${email}`);
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid password');
+      throw new UnauthorizedException('Неправильный пароль');
     }
     return {
       accessToken: this.jwtService.sign({ userId: user.id, role: user.role }),
@@ -38,7 +38,7 @@ export class AuthService {
     if (role === 'MANAGER') {
       if (!companyId) {
         throw new BadRequestException(
-          'Company ID is required for manager registration',
+          'Для регистрации менеджера требуется id компании',
         );
       }
 
@@ -47,7 +47,7 @@ export class AuthService {
       });
 
       if (!existingCompany) {
-        throw new BadRequestException('Company with this ID does not exist');
+        throw new BadRequestException('Компании с таким id не существует');
       }
     }
 
@@ -56,7 +56,9 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException('User with this email already exists');
+      throw new BadRequestException(
+        'Пользователь с таким email уже существует',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

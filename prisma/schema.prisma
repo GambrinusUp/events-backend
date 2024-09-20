@@ -31,7 +31,7 @@ model Company {
   id       String     @id @default(uuid())
   name     String
   managers User[]
-  events   Event[]
+  events   Event[]  @relation("CompanyEvent")
 }
 
 model Event {
@@ -45,7 +45,8 @@ model Event {
   managerId    String
   deadline     DateTime?
 
-  Company Company[]
+  company Company @relation("CompanyEvent", fields: [companyId], references: [id])
+  companyId String
 }
 
 enum Role {

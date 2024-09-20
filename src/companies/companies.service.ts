@@ -17,7 +17,9 @@ export class CompaniesService {
       where: { name: name },
     });
     if (existingCompany) {
-      throw new BadRequestException('Company with this name already exists');
+      throw new BadRequestException(
+        'Компания с таким названием уже существует',
+      );
     }
     const company = await this.prisma.company.create({ data: { name: name } });
     return company;
@@ -44,7 +46,7 @@ export class CompaniesService {
     });
 
     if (!company) {
-      throw new NotFoundException(`Company with id ${id} not found`);
+      throw new NotFoundException(`Компании с id ${id} не существует`);
     }
 
     return company;
@@ -56,7 +58,7 @@ export class CompaniesService {
     });
 
     if (!existingCompany) {
-      throw new NotFoundException(`Company with id ${id} not found`);
+      throw new NotFoundException(`Компания с id ${id} не найдена`);
     }
 
     const { name } = updateCompanyDto;
@@ -66,7 +68,9 @@ export class CompaniesService {
     });
 
     if (companyWithSameName && companyWithSameName.id !== id) {
-      throw new BadRequestException('Company with this name already exists');
+      throw new BadRequestException(
+        'Компания с таким названием уже существует',
+      );
     }
 
     const updatedCompany = await this.prisma.company.update({
@@ -85,13 +89,13 @@ export class CompaniesService {
     });
 
     if (!existingCompany) {
-      throw new NotFoundException(`Company with id ${id} not found`);
+      throw new NotFoundException(`Компания с id ${id} не найдена`);
     }
 
     await this.prisma.company.delete({
       where: { id: id },
     });
 
-    return { message: `Company with id ${id} has been deleted successfully` };
+    return { message: `Компания с id ${id} была успешно удалена` };
   }
 }
