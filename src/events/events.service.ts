@@ -4,10 +4,14 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { EventResponseDto } from './dto/event-response.dto';
 import { EditEventResponseDto } from './dto/edit-event.dto';
+import { GoogleService } from 'src/google/google.service';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private googleService: GoogleService,
+  ) {}
 
   async createEvent(
     createEventDto: CreateEventDto,
@@ -213,6 +217,25 @@ export class EventsService {
       },
     });
 
+    const user = await this.prisma.user.findUnique({
+      where: { id: studentId },
+      select: {
+        googleAccessToken: true,
+        googleRefreshToken: true,
+      },
+    });
+
+    if (user && user.googleAccessToken && user.googleRefreshToken) {
+      const eventDetails = {
+        title: event.title,
+        description: event.description,
+        startDate: event.date.toISOString(),
+        endDate: new Date(new Date(event.date).getTime() + 60 * 60 * 1000),
+      };
+
+      await this.googleService.addEventToCalendar(eventDetails, studentId);
+    }
+
     return { message: 'Вы успешно записались на событие' };
   }
 
@@ -246,9 +269,9 @@ export class EventsService {
       },
     });
 
-    if (!events || events.length === 0) {
+    /*if (!events || events.length === 0) {
       throw new ForbiddenException('Вы не зарегистрированы ни на одно событие');
-    }
+    }*/
 
     return events;
   }

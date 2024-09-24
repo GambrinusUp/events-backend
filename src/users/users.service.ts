@@ -29,7 +29,14 @@ export class UsersService {
   }
 
   async findAllStudents(): Promise<
-    Omit<User, 'password' | 'companyId' | 'isConfirmed'>[]
+    Omit<
+      User,
+      | 'password'
+      | 'companyId'
+      | 'isConfirmed'
+      | 'googleAccessToken'
+      | 'googleRefreshToken'
+    >[]
   > {
     const students = await this.prisma.user.findMany({
       where: { role: Role.STUDENT },

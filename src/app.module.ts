@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ManagersModule } from './managers/managers.module';
 import { EventsModule } from './events/events.module';
+import { GoogleModule } from './google/google.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { EventsModule } from './events/events.module';
     CompaniesModule,
     ManagersModule,
     EventsModule,
+    GoogleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
