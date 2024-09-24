@@ -10,6 +10,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { AuthEntity } from './entities/auth.entity';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RegisterResponse } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,19 +21,27 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<AuthEntity> {
     const user = await this.prisma.user.findUnique({ where: { email: email } });
+
     if (!user) {
       throw new NotFoundException(`Нет пользователя с таким email: ${email}`);
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Неправильный пароль');
     }
+
     return {
-      accessToken: this.jwtService.sign({ userId: user.id, role: user.role }),
+      accessToken: this.jwtService.sign({
+        userId: user.id,
+        role: user.role,
+        isConfirmed: user.isConfirmed,
+      }),
     };
   }
 
-  async register(createUserDto: CreateUserDto) {
+  async register(createUserDto: CreateUserDto): Promise<RegisterResponse> {
     const { email, name, password, role, companyId } = createUserDto;
 
     if (role === 'MANAGER') {
@@ -76,6 +85,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign({
       userId: user.id,
       role: user.role,
+      isConfirmed: user.isConfirmed,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -2,12 +2,17 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'prisma/prisma.service';
+import { EventResponseDto } from './dto/event-response.dto';
+import { EditEventResponseDto } from './dto/edit-event.dto';
 
 @Injectable()
 export class EventsService {
   constructor(private prisma: PrismaService) {}
 
-  async createEvent(createEventDto: CreateEventDto, managerId: string) {
+  async createEvent(
+    createEventDto: CreateEventDto,
+    managerId: string,
+  ): Promise<EventResponseDto> {
     const manager = await this.prisma.user.findUnique({
       where: { id: managerId },
       include: { company: true },
@@ -33,14 +38,56 @@ export class EventsService {
           ? new Date(createEventDto.deadline)
           : null,
       },
+      include: {
+        manager: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+        company: true,
+      },
     });
   }
 
-  async getAllEvents() {
+  async getAllEvents(
+    startDate?: string,
+    endDate?: string,
+  ): Promise<EventResponseDto[]> {
+    const where: any = {};
+
+    if (startDate && endDate) {
+      where.date = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      where.date = {
+        gte: new Date(startDate),
+      };
+    } else if (endDate) {
+      where.date = {
+        lte: new Date(endDate),
+      };
+    }
+
     return await this.prisma.event.findMany({
+      where,
       include: {
-        manager: true,
+        manager: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
         company: true,
+      },
+      orderBy: {
+        date: 'asc',
       },
     });
   }
@@ -72,7 +119,7 @@ export class EventsService {
     id: string,
     updateEventDto: UpdateEventDto,
     managerId: string,
-  ) {
+  ): Promise<EditEventResponseDto> {
     const manager = await this.prisma.user.findUnique({
       where: { id: managerId },
       include: { company: true },
@@ -109,17 +156,33 @@ export class EventsService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} event`;
+  async findOne(id: string): Promise<EventResponseDto> {
+    return await this.prisma.event.findUnique({
+      where: { id },
+      include: {
+        manager: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+        company: true,
+      },
+    });
   }
 
-  deleteEvent(id: string) {
-    return this.prisma.event.delete({
+  async deleteEvent(id: string) {
+    return await this.prisma.event.delete({
       where: { id },
     });
   }
 
-  async registerForEvent(eventId: string, studentId: string) {
+  async registerForEvent(
+    eventId: string,
+    studentId: string,
+  ): Promise<{ message: string }> {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: { students: true },
@@ -153,7 +216,9 @@ export class EventsService {
     return { message: 'Вы успешно записались на событие' };
   }
 
-  async getEventsForStudent(studentId: string) {
+  async getEventsForStudent(
+    studentId: string,
+  ): Promise<Partial<EventResponseDto>[]> {
     const events = await this.prisma.event.findMany({
       where: {
         students: {
@@ -171,16 +236,57 @@ export class EventsService {
         deadline: true,
         manager: {
           select: {
-            name: true,
+            id: true,
             email: true,
+            name: true,
+            role: true,
           },
         },
+        company: true,
       },
     });
 
     if (!events || events.length === 0) {
       throw new ForbiddenException('Вы не зарегистрированы ни на одно событие');
     }
+
+    return events;
+  }
+
+  async getEventsForCompany(
+    managerID: string,
+  ): Promise<Partial<EventResponseDto>[]> {
+    const manager = await this.prisma.user.findUnique({
+      where: { id: managerID },
+      select: { companyId: true },
+    });
+
+    if (!manager || !manager.companyId) {
+      throw new Error('Менеджер не принадлежит компании или не найден');
+    }
+
+    const events = await this.prisma.event.findMany({
+      where: {
+        companyId: manager.companyId,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        date: true,
+        location: true,
+        deadline: true,
+        manager: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+          },
+        },
+        company: true,
+      },
+    });
 
     return events;
   }

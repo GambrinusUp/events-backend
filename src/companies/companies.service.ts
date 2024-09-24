@@ -6,12 +6,14 @@ import {
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { PrismaService } from 'prisma/prisma.service';
+import { Company } from '@prisma/client';
+import { CompanyDetails } from './dto/company-details.dto';
 
 @Injectable()
 export class CompaniesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createCompanyDto: CreateCompanyDto) {
+  async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
     const { name } = createCompanyDto;
     const existingCompany = await this.prisma.company.findFirst({
       where: { name: name },
@@ -25,12 +27,12 @@ export class CompaniesService {
     return company;
   }
 
-  async getAllCompanies() {
+  async getAllCompanies(): Promise<Company[]> {
     const companies = await this.prisma.company.findMany();
     return companies;
   }
 
-  async getCompanyDetails(id: string) {
+  async getCompanyDetails(id: string): Promise<CompanyDetails> {
     const company = await this.prisma.company.findUnique({
       where: { id: id },
       include: {
@@ -52,7 +54,10 @@ export class CompaniesService {
     return company;
   }
 
-  async editCompany(id: string, updateCompanyDto: UpdateCompanyDto) {
+  async editCompany(
+    id: string,
+    updateCompanyDto: UpdateCompanyDto,
+  ): Promise<Company> {
     const existingCompany = await this.prisma.company.findUnique({
       where: { id: id },
     });
@@ -83,7 +88,7 @@ export class CompaniesService {
     return updatedCompany;
   }
 
-  async removeCompany(id: string) {
+  async removeCompany(id: string): Promise<{ message: string }> {
     const existingCompany = await this.prisma.company.findUnique({
       where: { id: id },
     });
