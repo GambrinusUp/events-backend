@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'prisma/prisma.service';
@@ -28,6 +32,15 @@ export class EventsService {
 
     if (!manager.isConfirmed) {
       throw new ForbiddenException('Менеджер еще не подтвержден');
+    }
+
+    const eventDate = new Date(createEventDto.date);
+    const deadline = createEventDto.deadline
+      ? new Date(createEventDto.deadline)
+      : null;
+
+    if (deadline && deadline < eventDate) {
+      throw new BadRequestException('Делайн не может быть раньше даты события');
     }
 
     return this.prisma.event.create({
@@ -151,6 +164,19 @@ export class EventsService {
     if (manager.companyId !== event.manager.companyId) {
       throw new ForbiddenException(
         'У вас нет прав на редактирование этого события',
+      );
+    }
+
+    const updatedDate = updateEventDto.date
+      ? new Date(updateEventDto.date)
+      : new Date(event.date);
+    const updatedDeadline = updateEventDto.deadline
+      ? new Date(updateEventDto.deadline)
+      : event.deadline;
+
+    if (updatedDeadline && updatedDeadline < updatedDate) {
+      throw new BadRequestException(
+        'Deadline не может быть раньше даты события',
       );
     }
 
