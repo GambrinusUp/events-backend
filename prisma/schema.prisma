@@ -19,22 +19,21 @@ model User {
   name      String
   password  String
   role      Role
+  isConfirmed Boolean  @default(false)
   company   Company? @relation(fields: [companyId], references: [id])
   companyId String?
+  googleAccessToken String?
+  googleRefreshToken String?
 
   events        Event[]  @relation("StudentEvent")
   createdEvents Event[]  @relation("ManagerEvent")
-
-  Company Company[] @relation("ManagerCompany")
 }
 
 model Company {
   id       String     @id @default(uuid())
   name     String
-  managers User[]  @relation("ManagerCompany") 
-  events   Event[]
-
-  User User[]
+  managers User[]
+  events   Event[]  @relation("CompanyEvent")
 }
 
 model Event {
@@ -48,7 +47,8 @@ model Event {
   managerId    String
   deadline     DateTime?
 
-  Company Company[]
+  company Company @relation("CompanyEvent", fields: [companyId], references: [id])
+  companyId String
 }
 
 enum Role {
